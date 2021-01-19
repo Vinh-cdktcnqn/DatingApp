@@ -1,5 +1,6 @@
 using System;
 using API.Entities;
+using API.Entities.Configuration;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
@@ -22,14 +23,38 @@ namespace API.Data
         public DbSet<Group> Groups { get; set; }
         public DbSet<Connection> Connections { get; set; }
 
+        public DbSet<AppConfig> AppConfigs { get; set; }
+        public DbSet<GioiThieu> GioiThieus { get; set; }
+        public DbSet<DichVu> DichVus { get; set; }
+        public DbSet<LienHe> LienHes { get; set; }
+        public DbSet<NhanSu> NhanSus { get; set; }
+        public DbSet<Slider> Sliders { get; set; }
+        public DbSet<TinTuc> TinTucs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder builder)
         {
             base.OnModelCreating(builder);
 
+            builder.ApplyConfiguration(new AppConfiguration());
+            builder.ApplyConfiguration(new DichVuConfiguration());
+            builder.ApplyConfiguration(new GioiThieuConfiguration());
+            builder.ApplyConfiguration(new LienHeConfiguration());
+            builder.ApplyConfiguration(new NhanSuConfiguration());
+            builder.ApplyConfiguration(new SliderConfiguration());
+            builder.ApplyConfiguration(new TinTucConfiguration());
+            builder.ApplyConfiguration(new AppRoleConfiguration());
+            builder.ApplyConfiguration(new AppUserConfiguration());
+
+            builder.Entity<IdentityUserRole<int>>().ToTable("AppUserRole").HasKey(x => new { x.UserId, x.RoleId });
+            builder.Entity<IdentityUserClaim<int>>().ToTable("AppUserClaim");
+            builder.Entity<IdentityUserLogin<int>>().ToTable("AppUserLogin").HasKey(x => x.UserId);
+            builder.Entity<IdentityRoleClaim<int>>().ToTable("AppRoleClaim");
+            builder.Entity<IdentityUserToken<int>>().ToTable("AppUserToken").HasKey(x => x.UserId);
+
             builder.Entity<Group>()
                 .HasMany(x => x.Connections)
                 .WithOne()
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<AppUser>()
                 .HasMany(ur => ur.UserRoles)
@@ -43,7 +68,6 @@ namespace API.Data
                 .HasForeignKey(ur => ur.RoleId)
                 .IsRequired();
 
-
             builder.Entity<UserLike>()
                 .HasKey(k => new { k.SourceUserId, k.LikedUserId });
 
@@ -51,13 +75,13 @@ namespace API.Data
                 .HasOne(s => s.SourceUser)
                 .WithMany(l => l.LikedUsers)
                 .HasForeignKey(s => s.SourceUserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<UserLike>()
                 .HasOne(s => s.LikedUser)
                 .WithMany(l => l.LikedByUsers)
                 .HasForeignKey(s => s.LikedUserId)
-                .OnDelete(DeleteBehavior.Cascade);
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.Entity<Message>()
                 .HasOne(u => u.Recipient)
@@ -68,6 +92,8 @@ namespace API.Data
                 .HasOne(u => u.Sender)
                 .WithMany(m => m.MessagesSent)
                 .OnDelete(DeleteBehavior.Restrict);
+
+
 
             builder.ApplyUtcDateTimeConverter();
         }
